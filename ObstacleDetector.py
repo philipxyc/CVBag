@@ -3,11 +3,12 @@ import cv2
 import pyrealsense2 as rs
 import time
 
-def findObstacle(depth, mask_thresh = 1000, depth_thresh = 20, max_thresh = 255, area_thresh = 500):
-    start = time.clock()    
-    # ret, depth = cv2.threshold(depth, mask_thresh, 255, cv2.THRESH_TOZERO)
+def findObstacle(depth, depth_range = (0, 1000), depth_thresh = 20, max_thresh = 255, area_thresh = 500):
+    start = time.clock()
+    
+    ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
+    ret, depth = cv2.threshold(depth, depth_range[1], 255, cv2.THRESH_TOZERO_INV)    
     depth = np.ubyte(depth * (1.0/16.0))
-
     yield depth
     # print("Mask:", time.clock() - start)
     # start = time.clock()
@@ -79,22 +80,21 @@ if __name__ == "__main__":
             # Detection
             finder = findObstacle(depth_image)
             filtered = next(finder)
-            filtered = np.asanyarray(colorizer.colorize(filtered).get_data())
             binary = next(finder)
             hulls, contours, hierarchy = next(finder)
             for i in range(len(hulls)):
                 # draw ith contour
-                cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8, hierarchy)
+                # cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8, hierarchy)
                 cv2.drawContours(depth_colormap, hulls, i, color_hull, 1, 8)
 
             # Stack both images horizontally
-            images = np.hstack((filterd, binary, depth_colormap))
+            # images = np.hstack((filterd, binary, depth_colormap))
 
             # Show images
             cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
-            cv2.imshow('RealSense', filtered)
-            cv2.imshow('RealSense', binary)
-            cv2.imshow('RealSense', images)
+            cv2.imshow('Filter', filtered)
+            cv2.imshow('Binary', binary)
+            cv2.imshow('RealSense', depth_colormap)
             cv2.waitKey(1)
 
     finally:
