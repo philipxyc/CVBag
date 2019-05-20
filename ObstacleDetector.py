@@ -2,20 +2,13 @@ import numpy as np
 import cv2
 import pyrealsense2 as rs
 import time
- 
-def maskDepth(image, thresh = 1000):
-	nr = image.shape[0] # number of rows
-	nc = image.shape[1]	# number of columns
-	cv2.threshold(depth, depth_thresh, 255, cv2.THRESH_BINARY)
-	for i in range(nr):
-		for j in range(nc):
-			if image[i][j] >= thresh:
-				image[i][j] = 0
 
 def findObstacle(depth, mask_thresh = 1000, depth_thresh = 20, max_thresh = 255, area_thresh = 500):
 	start = time.clock()	
 	ret, depth = cv2.threshold(depth, mask_thresh, 255, cv2.THRESH_TOZERO)
 	depth = np.ubyte(depth * (1.0/16.0))
+
+	yield dpeth
 	# print("Mask:", time.clock() - start)
 	# start = time.clock()
 	# cv2.imshow("Preprocessed Depth", depth)
@@ -33,6 +26,7 @@ def findObstacle(depth, mask_thresh = 1000, depth_thresh = 20, max_thresh = 255,
 	contours, hierarchy = cv2.findContours(binary_depth, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	# print("Contours:", time.clock() - start)
 	# start = time.clock()
+	yield binary_depth
 
 	# Find convex hull
 	hulls = contoursOut = []
@@ -42,24 +36,7 @@ def findObstacle(depth, mask_thresh = 1000, depth_thresh = 20, max_thresh = 255,
 			contoursOut.append(contours[i])
 	# print("Filter:", time.clock() - start)
 
-	return (hulls, contours, hierarchy)
-
-	# results = []
-	# # create an empty black image
-	# drawing = np.zeros((binary_depth.shape[0], binary_depth.shape[1], 3), np.uint8)
-	# for i in range(len(hulls)):
-	# 	if cv2.contourArea(contours[i]) >= area_thresh:
-	# 		results.append(hulls[i])
-	# 		color_contours = (0, 255, 0)
-	# 		color_hull = (0, 0, 255)
-	# 	else:
-	# 		color_contours = (0, 128, 0)
-	# 		color_hull = (0, 0, 128)
-	# 	# draw ith contour
- #    	cv2.drawContours(drawing, contours, i, color_contours, 1, 8, hierarchy)
- #    	cv2.drawContours(drawing, hulls, i, color_hull, 1, 8)
- #    cv2.imshow("Contours and Hulls", drawing)
- #    return results
+	yield (hulls, contours, hierarchy)
 
 if __name__ == "__main__":
 	# Configure depth and color streams
@@ -79,24 +56,28 @@ if __name__ == "__main__":
 			# Wait for a coherent pair of frames: depth and color
 			frames = pipeline.wait_for_frames()
 			depth_frame = frames.get_depth_frame()
-			color_frame = frames.get_color_frame()
-			if not depth_frame or not color_frame:
+			# color_frame = frames.get_color_frame()
+			# if not depth_frame or not color_frame:
+			if not depth_frame:
 				continue
 
 			# Convert images to numpy arrays
 			depth_image = np.asanyarray(depth_frame.get_data())
-			color_image = np.asanyarray(color_frame.get_data())
+			# color_image = np.asanyarray(color_frame.get_data())
 
 			# Apply colormap on depth image (image must be converted to 8-bit per pixel first)
 			depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 			# Detection
-			hulls, contours, hierarchy = findObstacle(depth_image)
+			finder = findObstacle(depth_image)
+			filterd = next(finder)
+			binary = next(finder)
+			hulls, contours, hierarchy = next(finder)
 			for i in range(len(hulls)):
 			 	# draw ith contour
 				cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8, hierarchy)
 				cv2.drawContours(depth_colormap, hulls, i, color_hull, 1, 8)
 			# Stack both images horizontally
-			images = np.hstack((color_image, depth_colormap))
+			images = np.hstack((filterd, binary, depth_colormap))
 
 			# Show images
 			cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
