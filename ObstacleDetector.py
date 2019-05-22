@@ -3,7 +3,7 @@ import cv2
 import pyrealsense2 as rs
 import time
 
-def findObstacle(depth, depth_range = (0, 1000), depth_thresh = 20, max_thresh = 255, area_thresh = 500):
+def findObstacle(depth, depth_range = (0, 3000), depth_thresh = 20, max_thresh = 255, area_thresh = 500):
     start = time.clock()
     
     ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
@@ -21,7 +21,7 @@ def findObstacle(depth, depth_range = (0, 1000), depth_thresh = 20, max_thresh =
 
     # Search contours
     ret, binary_depth = cv2.threshold(depth, depth_thresh, 255, cv2.THRESH_BINARY)
-    ret, contours, hierarchy = cv2.findContours(binary_depth, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    ret, contours, hierarchy = cv2.findContours(binary_depth, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     yield binary_depth
 
     # Find convex hull
@@ -76,7 +76,8 @@ if __name__ == "__main__":
             # color_image = np.asanyarray(color_frame.get_data())
 
             # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
-            depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+            #depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+            depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
             # Detection
             finder = findObstacle(depth_image)
             filtered = next(finder)
