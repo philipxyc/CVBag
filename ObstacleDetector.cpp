@@ -1,6 +1,6 @@
+#include <iostream>
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 #include <algorithm>            // std::min, std::max
-
 
 int main(int argc, char * argv[]) try
 {
@@ -14,7 +14,7 @@ int main(int argc, char * argv[]) try
     // Start streaming with default recommended configuration
     pipe.start();
 
-    while (app) // Application still alive?
+    while (true) // Application still alive?
     {
         // Wait for the next set of frames from the camera
         auto frames = pipe.wait_for_frames();
