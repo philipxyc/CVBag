@@ -33,9 +33,15 @@ def findObstacle(depth, depth_range = (0, 3000), depth_thresh = 20, max_thresh =
 
     yield (hulls, contours, hierarchy)
 
-def analyzePointCloud(points):
-    print(type(points))
-    print(dir(points))
+def analyzePointCloud(points, frame):
+    v = np.asarray(points.get_data())
+    #p = np.zeros((v.shape[0], 3), dtype=float)
+    #for i in range(len(v)):
+    #    p[i][0] = np.float(v[i][0])
+    #    p[i][1] = np.float(v[i][1])
+    #    p[i][2] = np.float(v[i][2])
+    
+    # dists = 1.0 / np.linalg.norm(p, axis=1)
 
 if __name__ == "__main__":
     # Configure depth and color streams
@@ -44,6 +50,8 @@ if __name__ == "__main__":
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 15)
     # config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
+    pc = rs.pointcloud()
+            
     # Start streaming
     pipeline.start(config)
 
@@ -84,9 +92,8 @@ if __name__ == "__main__":
             depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
 
             # Convert to point cloud
-            pc = rs.pointcloud()
             points = pc.calculate(depth_frame)
-            analyzePointCloud(points)
+            analyzePointCloud(points, depth_frame)
 
             # Detection
             '''
