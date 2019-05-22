@@ -1,18 +1,19 @@
 import numpy as np
 import cv2
 import pyrealsense2 as rs
-import time
+import time, math
 
-def findObstacle(depth, depth_range = (0, 3000), depth_thresh = 20, max_thresh = 255, area_thresh = 500):
+# Configuration
+depth_range = (0, 50000)
+depth_thresh = 20000
+area_thresh = 200
+
+def findObstacle(depth):
     start = time.clock()
     
     ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
     ret, depth = cv2.threshold(depth, depth_range[1], 255, cv2.THRESH_TOZERO_INV)    
-    depth = np.ubyte(depth * (1.0/16.0))
-    yield depth
-    # print("Mask:", time.clock() - start)
-    # start = time.clock()
-    # cv2.imshow("Preprocessed Depth", depth)
+    depth = np.ubyte(depth)
 
     # Get a 15x15 kernel filled with 1
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
@@ -22,7 +23,6 @@ def findObstacle(depth, depth_range = (0, 3000), depth_thresh = 20, max_thresh =
     # Search contours
     ret, binary_depth = cv2.threshold(depth, depth_thresh, 255, cv2.THRESH_BINARY)
     ret, contours, hierarchy = cv2.findContours(binary_depth, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    yield binary_depth
 
     # Find convex hull
     hulls = contoursOut = []
@@ -31,17 +31,22 @@ def findObstacle(depth, depth_range = (0, 3000), depth_thresh = 20, max_thresh =
             hulls.append(cv2.convexHull(contours[i], False))
             contoursOut.append(contours[i])
 
-    yield (hulls, contours, hierarchy)
+    return (depth, binary_depth, hulls, contours, hierarchy)
 
-def analyzePointCloud(points, frame):
-    v = np.asarray(points.get_data())
-    #p = np.zeros((v.shape[0], 3), dtype=float)
-    #for i in range(len(v)):
-    #    p[i][0] = np.float(v[i][0])
-    #    p[i][1] = np.float(v[i][1])
-    #    p[i][2] = np.float(v[i][2])
-    
-    # dists = 1.0 / np.linalg.norm(p, axis=1)
+def depthIntensity(depth):
+    ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
+    ret, depth = cv2.threshold(depth, depth_range[1], 255, cv2.THRESH_TOZERO_INV)
+    depth(depth == 0.0) = float('inf')
+    depth = 1.0 / depth
+    numBlock = 5
+    step = math.ceil(depth.shape[1] / numBlock)
+    intensity = [0.0] * 5.0
+    for i in range(numBlock):
+        if i <= numBlock - 2:
+            intensity.append(np.sum(depth[...,i*step:(i+1)*step]))
+        else:
+            intensity.append(np.sum(depth[...,i*step:]))
+    return intensity
 
 if __name__ == "__main__":
     # Configure depth and color streams
@@ -58,8 +63,8 @@ if __name__ == "__main__":
     try:
         colorizer = rs.colorizer()
 
-        color_contours = (0, 255, 0)
-        color_hull = (0, 0, 255)
+        color_contours = (255, 255, 0)
+        color_hull = (255, 255, 255)
         while True:
 
             # Wait for a coherent pair of frames: depth and color
@@ -92,25 +97,23 @@ if __name__ == "__main__":
             depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
 
             # Convert to point cloud
-            points = pc.calculate(depth_frame)
-            analyzePointCloud(points, depth_frame)
+            # points = pc.calculate(depth_frame)
+            # analyzePointCloud(points, depth_frame)
 
             # Detection
-            '''
-            finder = findObstacle(depth_image)
-            filtered = next(finder)
-            binary = next(finder)
-            hulls, contours, hierarchy = next(finder)
+            threshed, binary, hulls, contours, hierarchy = findObstacle(depth_image)
             for i in range(len(hulls)):
                 # draw ith contour
-                # cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8, hierarchy)
-                cv2.drawContours(depth_colormap, hulls, i, color_hull, 1, 8)
-            '''
+                cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8)
+                cv2.drawContours(depth_colormap, hulls, i, color_hull, 2, 8)
+
+            intensity = depthIntensity(depth_image)
+            print(intensity)
 
             # Show images
             cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
             cv2.imshow('RealSense', depth_colormap)
-            # cv2.imshow('Filter', filtered)
+            cv2.imshow('Threshed', threshed)
             # cv2.imshow('Binary', binary)
             cv2.waitKey(1)
 
