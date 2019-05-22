@@ -33,6 +33,10 @@ def findObstacle(depth, depth_range = (0, 3000), depth_thresh = 20, max_thresh =
 
     yield (hulls, contours, hierarchy)
 
+def analyzePointCloud(points):
+    print(type(points))
+    print(dir(points))
+
 if __name__ == "__main__":
     # Configure depth and color streams
     pipeline = rs.pipeline()
@@ -78,7 +82,14 @@ if __name__ == "__main__":
             # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
             #depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
             depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
+
+            # Convert to point cloud
+            pc = rs.pointcloud()
+            points = pc.calculate(depth_frame)
+            analyzePointCloud(points)
+
             # Detection
+            '''
             finder = findObstacle(depth_image)
             filtered = next(finder)
             binary = next(finder)
@@ -87,15 +98,13 @@ if __name__ == "__main__":
                 # draw ith contour
                 # cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8, hierarchy)
                 cv2.drawContours(depth_colormap, hulls, i, color_hull, 1, 8)
-
-            # Stack both images horizontally
-            # images = np.hstack((filterd, binary, depth_colormap))
+            '''
 
             # Show images
             cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
-            cv2.imshow('Filter', filtered)
-            cv2.imshow('Binary', binary)
             cv2.imshow('RealSense', depth_colormap)
+            # cv2.imshow('Filter', filtered)
+            # cv2.imshow('Binary', binary)
             cv2.waitKey(1)
 
     finally:
