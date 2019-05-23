@@ -22,10 +22,10 @@ except sr.RequestError as e:
 '''
 
 # recognize speech using Microsoft Bing Voice Recognition
-BING_KEY = "b1b54e5bcd8943f0b8106e000e1298d7"  # Microsoft Bing Voice Recognition API keys 32-character lowercase hexadecimal strings
+AZURE_SPEECH_KEY = "b1b54e5bcd8943f0b8106e000e1298d7"  # Microsoft Speech API keys 32-character lowercase hexadecimal strings
 try:
-    print("Microsoft Bing Voice Recognition thinks you said " + r.recognize_bing(audio, key=BING_KEY))
+    print("Microsoft Azure Speech thinks you said " + r.recognize_azure(audio, key=AZURE_SPEECH_KEY))
 except sr.UnknownValueError:
-    print("Microsoft Bing Voice Recognition could not understand audio")
+    print("Microsoft Azure Speech could not understand audio")
 except sr.RequestError as e:
-    print("Could not request results from Microsoft Bing Voice Recognition service; {0}".format(e))
+    print("Could not request results from Microsoft Azure Speech service; {0}".format(e))
