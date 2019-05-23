@@ -1,7 +1,7 @@
 import numpy as np
 import pyrealsense2 as rs
 import cv2
-import time
+import math, time
 
 
 ##################################################################
@@ -116,7 +116,8 @@ def edgeDetection(depth):
 ##################################################################
 # Main Loop Parameters
 ##################################################################
-depthmap_visualization = True
+depthmap_visualization = False
+colormap_visualization = False
 objdetect_visualization = True
 
 if __name__ == "__main__":
@@ -167,13 +168,19 @@ if __name__ == "__main__":
         color_frame = frame.get_color_frame()
         depth_frame = frame.get_depth_frame()
 
+        depth_frame = decimation.process(depth_frame)
+        depth_frame = threshold.process(depth_frame)
+        depth_frame = depth_to_disparity.process(depth_frame)
+        depth_frame = spatial.process(depth_frame)
+        depth_frame = disparity_to_depth.process(depth_frame)
+
         color_mat = np.asanyarray(color_frame.get_data())
         depth_mat = np.asanyarray(depth_frame.get_data())
 
         if depthmap_visualization:
             depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
             cv2.imshow("Depth Map", depth_colormap)
-        if depthmap_visualization:
+        if colormap_visualization:
             cv2.imshow("Color Map", color_mat)
 
         intensity = obstacleEstimate(depth_mat)
@@ -186,11 +193,11 @@ if __name__ == "__main__":
             objects = objectDetect(color_mat, depth_mat, crop)
             for obj in objects:
                 className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
-                conf = "%s(%f), %fm" % (className, confidence, m[0])
+                conf = "%s(%f), %fm" % (className, confidence, m)
 
                 if objdetect_visualization:
-                    cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
-                    cv2.putText(color_mat, className, (xLeftBottom, yLeftBottom), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                    cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
+                    cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
             print("Detection time: %fs" % (time.clock() - start_time))
 
             if objdetect_visualization:
