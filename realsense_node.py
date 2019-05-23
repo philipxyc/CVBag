@@ -70,6 +70,10 @@ def objectDetect(color_mat, depth_mat, crop):
             })
     return results
 
+##################################################################
+# Obstacle Estimation Parameters
+##################################################################
+depth_range = (0, 2000)
 def obstacleEstimate(depth):
     depth = np.float32(depth)
     ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
