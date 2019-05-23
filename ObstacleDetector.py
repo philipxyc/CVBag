@@ -4,8 +4,8 @@ import pyrealsense2 as rs
 import time, math
 
 # Configuration
-depth_range = (0, 50000)
-depth_thresh = 20000
+depth_range = (0, 2000)
+depth_thresh = 1000
 area_thresh = 200
 
 def findObstacle(depth):
@@ -22,7 +22,7 @@ def findObstacle(depth):
 
     # Search contours
     ret, binary_depth = cv2.threshold(depth, depth_thresh, 255, cv2.THRESH_BINARY)
-    ret, contours, hierarchy = cv2.findContours(binary_depth, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(binary_depth, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Find convex hull
     hulls = contoursOut = []
@@ -34,13 +34,14 @@ def findObstacle(depth):
     return (depth, binary_depth, hulls, contours, hierarchy)
 
 def depthIntensity(depth):
+    depth = np.float32(depth)
     ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
     ret, depth = cv2.threshold(depth, depth_range[1], 255, cv2.THRESH_TOZERO_INV)
-    depth(depth == 0.0) = float('inf')
+    depth[depth == 0.0] = float('inf')
     depth = 1.0 / depth
     numBlock = 5
     step = math.ceil(depth.shape[1] / numBlock)
-    intensity = [0.0] * 5.0
+    intensity = [] 
     for i in range(numBlock):
         if i <= numBlock - 2:
             intensity.append(np.sum(depth[...,i*step:(i+1)*step]))
@@ -102,6 +103,9 @@ if __name__ == "__main__":
 
             # Detection
             threshed, binary, hulls, contours, hierarchy = findObstacle(depth_image)
+            threshed = np.uint8(threshed/8.0)
+            # binary = cv2.applyColorMap(cv2.convertScaleAbs(binary, alpha=0.03), cv2.COLORMAP_JET)
+
             for i in range(len(hulls)):
                 # draw ith contour
                 cv2.drawContours(depth_colormap, contours, i, color_contours, 1, 8)
