@@ -1,7 +1,6 @@
 import multiprocessing
 import realsense_node
 import speech2text_node
-import text2speech_node
 
 if __name__ == '__main__':
     # Establish communication queues

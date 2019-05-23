@@ -1,3 +1,4 @@
+import multiprocessing, queue
 import azure.cognitiveservices.speech as speechsdk
 
 def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_results)
@@ -12,7 +13,7 @@ def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_re
 			task = task_queue.get_nowait()
 			if task is None:
 				break
-		except multiprocessing.Queue.Empty:
+		except queue.Empty:
 			pass
 
 		# Creates an instance of a speech config with specified subscription key and service region.
