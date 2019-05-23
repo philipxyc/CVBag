@@ -11,7 +11,8 @@ if __name__ == '__main__':
     navTasks = multiprocessing.Queue()
     navResults = multiprocessing.Queue()
 
-    workerSpeech2Txt = multiprocessing.Process(name='block'
+    workerSpeech2Txt = multiprocessing.Process(
+    	name='speech to text'
     	, target=speech2text_node.start_node
     	, args=(speechToTextTasks, objDetectionTasks, objDetectionResults, navTasks, navResults)
     )
