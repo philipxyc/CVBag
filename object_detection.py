@@ -115,18 +115,18 @@ if __name__ == "__main__":
                 
                 conf = className + " " + str(m[0]) + "meters away"
 
-                # cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
-                labelSize, baseLine = cv2.getTextSize(conf, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
+                # labelSize, baseLine = cv2.getTextSize(conf, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-                center = [(xLeftBottom + xRightTop)*0.5, (yLeftBottom + yRightTop)*0.5]
-                center[0] = center[0] - labelSize[0] / 2
+                # center = [(xLeftBottom + xRightTop)*0.5, (yLeftBottom + yRightTop)*0.5]
+                # center[0] = center[0] - labelSize[0] / 2
 
-                cv2.rectangle(color_mat
-                    , (center[0], center[1] - labelSize[1])
-                    , (center[0] + labelSize[0], center[1] + baseLine)
-                    , (0, 255, 0)
-                )
-                cv2.putText(color_mat, className, center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                # cv2.rectangle(color_mat
+                #     , (center[0], center[1] - labelSize[1])
+                #     , (center[0] + labelSize[0], center[1] + baseLine)
+                #     , (0, 255, 0)
+                # )
+                cv2.putText(color_mat, className, (xLeftBottom, yLeftBottom), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
         print("Time detection: %f" % (time.clock() - start_time))
 
         cv2.imshow("Display Image", color_mat)
