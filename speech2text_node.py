@@ -1,6 +1,12 @@
 import azure.cognitiveservices.speech as speechsdk
 
 def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_results)
+	speech_key, service_region = "b1b54e5bcd8943f0b8106e000e1298d7", "eastasia"
+	speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
+
+	# Creates a recognizer with the given settings
+	speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
+	
 	while True:
 		try:
 			task = task_queue.get_nowait()
@@ -11,11 +17,6 @@ def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_re
 
 		# Creates an instance of a speech config with specified subscription key and service region.
 		# Replace with your own subscription key and service region (e.g., "westus").
-		speech_key, service_region = "b1b54e5bcd8943f0b8106e000e1298d7", "eastasia"
-		speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-
-		# Creates a recognizer with the given settings
-		speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
 
 		print("Say something...")
 

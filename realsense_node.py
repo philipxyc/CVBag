@@ -3,6 +3,25 @@ import cv2
 import pyrealsense2 as rs
 import multiprocessing
 import math, time
+from pyfirmata import Arduino
+
+
+##################################################################
+# Vibration Control Util
+##################################################################
+
+try:
+    board = Arduino('COM5')
+except:
+    board = Arduino('COM3')
+
+pins = [board.get_pin('d:10:p'), board.get_pin('d:9:p'), board.get_pin('d:6:p'), board.get_pin('d:5:p'), board.get_pin('d:3:p')]
+
+def set_vib(l:list):
+    val, idx = min((val, idx) for (idx, val) in enumerate(my_list))
+    pins[idx].write(max(1 - l[idx]/60, 0))
+
+
 
 ##################################################################
 # DNN Parameters
@@ -185,6 +204,8 @@ def start_node(task_queue, result_queue):
         intensity = obstacleEstimate(depth_mat)
         if depthintensity_verbose:
             print("Intensity:", intensity)
+
+        set_vib(intensity)
 
         try:
             task = task_queue.get_nowait()
