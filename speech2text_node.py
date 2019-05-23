@@ -1,6 +1,7 @@
+import multiprocessing
 import azure.cognitiveservices.speech as speechsdk
 
-def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_results)
+def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_results):
 	while True:
 		try:
 			task = task_queue.get_nowait()
