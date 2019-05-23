@@ -3,8 +3,6 @@ import pyrealsense2 as rs
 import cv2
 
 
-
-
 inWidth      = 300
 inHeight     = 300
 WHRatio       = inWidth /float(inHeight)
@@ -50,7 +48,7 @@ if __name__ == "__main__":
 
 
     #crop = cv2.rectangle(((profile_data.width - cropSize[1]) / 2, (profile_data.height - cropSize[0]]) / 2), cropSize,(0,0,0))
-    crop = [( int ((profile_data.width - cropSize[1]) / 2), int((profile_data.height - cropSize[0]) / 2 )), cropSize]
+    crop = [(int((profile_data.width - cropSize[1]) / 2), int((profile_data.height - cropSize[0]) / 2 )), cropSize]
 
 
     cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
@@ -71,34 +69,26 @@ if __name__ == "__main__":
 
         color_mat = np.asanyarray(color_frame.get_data())        
         depth_mat = np.asanyarray(depth_frame.get_data())
-
-
         
         input_blob = cv2.dnn.blobFromImage(color_mat,inScaleFactor,(inWidth,inHeight),meanVal,False)
-
         
-        net.setInput(input_blob,"data")
-
+        net.setInput(input_blob, "data")
 
         # print(net.getLayerNames())
         # detection = net.forward("fc")
         detection = net.forward("detection_out")
 
-        #????? how to initialize
-        
-        
+        #how to initialize
         detectionMat = np.reshape(detection,(detection.shape[2],detection.shape[3]))
         # detectionMat = np.zeros(detection.shape[2],detection.shape[3],cv2.CV_32F,detection)
 
-        #?? how to crop a mat with rectangle
-        print(crop)
-        color_mat = color_mat[crop[0][0]:crop[1][0],crop[0][1]:crop[1][1]]
-
-        depth_mat = depth_mat[crop[0][0]:crop[1][0],crop[0][1]:crop[1][1]]
+        #how to crop a mat with rectangle
+        color_mat = color_mat[crop[0][1]:crop[0][1]+crop[1][1], crop[0][0]:crop[0][0]+crop[1][0]]
+        depth_mat = depth_mat[crop[0][1]:crop[0][1]+crop[1][1], crop[0][0]:crop[0][0]+crop[1][0]]
 
         confiddenceThreshold = 0.0
 
-        for i in range(0,detection.size // 7):
+        for i in range(0, detection.size // 7):
             confidence = detectionMat[i][2]
             if confidence > confiddenceThreshold:
                 
@@ -109,18 +99,23 @@ if __name__ == "__main__":
                 xRightTop = int(detectionMat[i][5] * color_mat.shape[1])
                 yRightTop = int(detectionMat[i][6] * color_mat.shape[0])
 
+                if xLeftBottom < 0: xLeftBottom = 0
+                if yLeftBottom > depth_mat.shape[0]: yLeftBottom = depth_mat.shape[0]
+                if xRightTop > depth_mat.shape[1]: xRightTop = depth_mat.shape[1]
+                if yRightTop < 0: yRightTop = 0
+
                 print("obj is " , classNames[int(objectClass)] )
 
-                obj = [ xLeftBottom, yLeftBottom, xRightTop - xLeftBottom, yRightTop-yLeftBottom ]
+                rect = (xLeftBottom, yLeftBottom, xRightTop, yRightTop)
 
                 # #crop again, how?
-                m = cv2.mean(depth_mat[obj])
+                m = cv2.mean(depth_mat[yRightTop:yLeftBottom][xLeftBottom:xRightTop])
                 
                 conf = classNames[objectClass] + " " + m[0] + "meters away"
 
-                cv2.rectangle(color_mat, obj, (0, 255, 0))
+                cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
                 # baseLine = 0
-                # SlabelSize = cv2.getTextSize(ss.str(), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine)
+                # SlabelSize = cv2.getTextSize(conf, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
                 # center = (obj.br() + obj.tl())*0.5
                 # center.x = center.x - labelSize.width / 2
