@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 cv2.rectangle(color_mat
                     , (center[0], center[1] - labelSize[1])
                     , (center[0] + labelSize[0], center[1] + baseLine)
-                    , (0, 255, 0), cv2.FILLED
+                    , (0, 255, 0)
                 )
                 cv2.putText(color_mat, className, center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
         print("Time detection: %f" % (time.clock() - start_time))
