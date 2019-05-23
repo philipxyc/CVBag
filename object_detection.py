@@ -122,11 +122,11 @@ if __name__ == "__main__":
                 center[0] = center[0] - labelSize[0] / 2
 
                 cv2.rectangle(color_mat
-                    , (center.x, center.y - labelSize[1])
-                    , (center.x + labelSize[0], center.y + baseLine)
+                    , (center[0], center[1] - labelSize[1])
+                    , (center[0] + labelSize[0], center[1] + baseLine)
                     , (0, 255, 0), FILLED
                 )
-                cv2.putText(color_mat, classNames[objectClass], center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                cv2.putText(color_mat, className, center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
         print("Time detection: %f" % (time.clock() - start_time))
 
         cv2.imshow("Display Image", color_mat)
