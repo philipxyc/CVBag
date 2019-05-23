@@ -1,8 +1,8 @@
 import numpy as np
-import pyrealsense2 as rs
 import cv2
+import pyrealsense2 as rs
+import multiprocessing
 import math, time
-
 
 ##################################################################
 # DNN Parameters
@@ -74,6 +74,7 @@ def objectDetect(color_mat, depth_mat, crop):
 # Obstacle Estimation Parameters
 ##################################################################
 depth_range = (0, 2000)
+
 def obstacleEstimate(depth):
     depth = np.float32(depth)
     ret, depth = cv2.threshold(depth, depth_range[0], 255, cv2.THRESH_TOZERO)
@@ -118,9 +119,11 @@ def edgeDetection(depth):
 ##################################################################
 depthmap_visualization = False
 colormap_visualization = False
-objdetect_visualization = True
+objdetect_visualization = False
+depthintensity_verbose = True
+objdetection_verbose = True
 
-if __name__ == "__main__":
+def start_node(task_queue, result_queue):
     
     net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel")
     
@@ -142,12 +145,8 @@ if __name__ == "__main__":
     if profile_data.width / float(profile_data.height) > WHRatio:
         cropSize = (int(profile_data.height * WHRatio), profile_data.height)
     else:   
-        cropSize = (profile_data.width, int(profile_data.width/WHRatio))
-
-    # crop = cv2.rectangle(((profile_data.width - cropSize[1]) / 2, (profile_data.height - cropSize[0]]) / 2), cropSize,(0,0,0))
+        cropSize = (profile_data.width, int(profile_data.width / WHRatio))
     crop = [(int((profile_data.width - cropSize[1]) / 2), int((profile_data.height - cropSize[0]) / 2 )), cropSize]
-
-    cv2.namedWindow('CV Bag', cv2.WINDOW_AUTOSIZE)
 
     last_frame_number = 0
 
@@ -184,23 +183,44 @@ if __name__ == "__main__":
             cv2.imshow("Color Map", color_mat)
 
         intensity = obstacleEstimate(depth_mat)
-        print("Intensity:", intensity)
+        if depthintensity_verbose:
+            print("Intensity:", intensity)
 
-        if color_frame.get_frame_number() != last_frame_number:
-            last_frame_number = color_frame.get_frame_number()
+        try:
+            task = task_queue.get_nowait()
+            if task is None:
+                break
+            objectDetectEnabled = True
+        except multiprocessing.Queue.Empty:
+            objectDetectEnabled = False
 
-            start_time = time.clock()
-            objects = objectDetect(color_mat, depth_mat, crop)
-            for obj in objects:
-                className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
-                conf = "%s(%f), %fm" % (className, confidence, m)
+        if objectDetectEnabled:
+            if color_frame.get_frame_number() != last_frame_number:
+                last_frame_number = color_frame.get_frame_number()
+
+                # Record start time
+                if objdetection_verbose:
+                    start_time = time.clock()
+
+                objects = objectDetect(color_mat, depth_mat, crop)
+
+                # Send result to the message queue
+                result_queue.put(objects)
+
+                for obj in objects:
+                    className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
+                    conf = "%s(%f), %fm" % (className, confidence, m)
+
+                    if objdetection_verbose:
+                        print("Detected: %s, Distance: %f" % (className, m))
+
+                    if objdetect_visualization:
+                        cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
+                        cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                if objdetection_verbose:
+                    print("Detection time: %fs" % (time.clock() - start_time))
 
                 if objdetect_visualization:
-                    cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
-                    cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
-            print("Detection time: %fs" % (time.clock() - start_time))
-
-            if objdetect_visualization:
-                cv2.imshow("Object Detection", color_mat)
+                    cv2.imshow("Object Detection", color_mat)
             
         cv2.waitKey(1)
