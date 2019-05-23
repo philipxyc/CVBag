@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import pyrealsense2 as rs
-import multiprocessing
+import multiprocessing, queue
 import math, time
 
 ##################################################################
@@ -117,7 +117,7 @@ def edgeDetection(depth):
 ##################################################################
 # Main Loop Parameters
 ##################################################################
-depthmap_visualization = False
+depthmap_visualization = True
 colormap_visualization = False
 objdetect_visualization = False
 depthintensity_verbose = True
@@ -191,7 +191,7 @@ def start_node(task_queue, result_queue):
             if task is None:
                 break
             objectDetectEnabled = True
-        except multiprocessing.Queue.Empty:
+        except queue.Empty:
             objectDetectEnabled = False
 
         if objectDetectEnabled:
