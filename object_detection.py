@@ -1,6 +1,7 @@
 import numpy as np
 import pyrealsense2 as rs
 import cv2
+import time
 
 
 inWidth      = 300
@@ -54,6 +55,8 @@ if __name__ == "__main__":
     while(True):
         data = pipe.wait_for_frames()
 
+        start_time = time.clock()
+
         data = align_to.process(data)
 
         color_frame = data.get_color_frame()
@@ -103,14 +106,14 @@ if __name__ == "__main__":
                 if yRightTop < 0: yRightTop = 0
 
                 className = classNames[int(objectClass)]
-                print("%s(%f) is detected!", % (className, confidence))
+                print("%s(%f) is detected!" % (className, confidence))
 
                 rect = (xLeftBottom, yLeftBottom, xRightTop, yRightTop)
 
                 # crop again, how?
                 m = cv2.mean(depth_mat[yRightTop:yLeftBottom][xLeftBottom:xRightTop])
                 
-                conf = classNames[objectClass] + " " + str(m[0]) + "meters away"
+                conf = className + " " + str(m[0]) + "meters away"
 
                 # cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
                 labelSize, baseLine = cv2.getTextSize(conf, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
@@ -124,6 +127,7 @@ if __name__ == "__main__":
                     , (0, 255, 0), FILLED
                 )
                 cv2.putText(color_mat, classNames[objectClass], center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+        print("Time detection: %f" % (time.clock() - start_time))
 
         cv2.imshow("Display Image", color_mat)
         cv2.waitKey(1)
