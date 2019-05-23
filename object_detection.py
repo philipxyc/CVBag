@@ -122,7 +122,7 @@ if __name__ == "__main__":
                 center[0] = center[0] - labelSize[0] / 2
 
                 cv2.rectangle(color_mat
-                    , (center.x, center.y - labelSize[1]),
+                    , (center.x, center.y - labelSize[1])
                     , (center.x + labelSize[0], center.y + baseLine)
                     , (0, 255, 0), FILLED
                 )
