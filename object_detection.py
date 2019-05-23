@@ -87,7 +87,7 @@ if __name__ == "__main__":
         color_mat = color_mat[crop[0][1]:crop[0][1]+crop[1][1], crop[0][0]:crop[0][0]+crop[1][0]]
         depth_mat = depth_mat[crop[0][1]:crop[0][1]+crop[1][1], crop[0][0]:crop[0][0]+crop[1][0]]
 
-        confiddenceThreshold = 0.5
+        confiddenceThreshold = 0.8
 
         for i in range(0, detection.size // 7):
             confidence = detectionMat[i][2]
