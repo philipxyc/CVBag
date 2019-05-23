@@ -46,10 +46,8 @@ if __name__ == "__main__":
     else:   
         cropSize = (profile_data.width, int(profile_data.width/WHRatio))
 
-
     #crop = cv2.rectangle(((profile_data.width - cropSize[1]) / 2, (profile_data.height - cropSize[0]]) / 2), cropSize,(0,0,0))
     crop = [(int((profile_data.width - cropSize[1]) / 2), int((profile_data.height - cropSize[0]) / 2 )), cropSize]
-
 
     cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
 
@@ -86,7 +84,7 @@ if __name__ == "__main__":
         color_mat = color_mat[crop[0][1]:crop[0][1]+crop[1][1], crop[0][0]:crop[0][0]+crop[1][0]]
         depth_mat = depth_mat[crop[0][1]:crop[0][1]+crop[1][1], crop[0][0]:crop[0][0]+crop[1][0]]
 
-        confiddenceThreshold = 0.0
+        confiddenceThreshold = 0.5
 
         for i in range(0, detection.size // 7):
             confidence = detectionMat[i][2]
@@ -104,30 +102,31 @@ if __name__ == "__main__":
                 if xRightTop > depth_mat.shape[1]: xRightTop = depth_mat.shape[1]
                 if yRightTop < 0: yRightTop = 0
 
-                print("obj is " , classNames[int(objectClass)] )
+                className = classNames[int(objectClass)]
+                print("%s(%f) is detected!", % (className, confidence))
 
                 rect = (xLeftBottom, yLeftBottom, xRightTop, yRightTop)
 
-                # #crop again, how?
+                # crop again, how?
                 m = cv2.mean(depth_mat[yRightTop:yLeftBottom][xLeftBottom:xRightTop])
                 
-                conf = classNames[objectClass] + " " + m[0] + "meters away"
+                conf = classNames[objectClass] + " " + str(m[0]) + "meters away"
 
-                cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
-                # baseLine = 0
-                # SlabelSize = cv2.getTextSize(conf, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                # cv2.rectangle(color_mat, (xLeftBottom, yLeftBottom), (xRightTop, yRightTop), (0, 255, 0))
+                labelSize, baseLine = cv2.getTextSize(conf, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-                # center = (obj.br() + obj.tl())*0.5
-                # center.x = center.x - labelSize.width / 2
+                center = [(xLeftBottom + xRightTop)*0.5, (yLeftBottom + yRightTop)*0.5]
+                center[0] = center[0] - labelSize[0] / 2
 
-                # cv2.rectangle(color_mat, cv2.rectangle((center.x, center.y - labelSize.height),\
-                #     (labelSize.width, labelSize.height + baseLine)),\
-                #     (255, 255, 255), FILLED)
-                # putText(color_mat, classNames[objectClass], center, \
-                #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                cv2.rectangle(color_mat
+                    , (center.x, center.y - labelSize[1]),
+                    , (center.x + labelSize[0], center.y + baseLine)
+                    , (0, 255, 0), FILLED
+                )
+                cv2.putText(color_mat, classNames[objectClass], center, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
 
-
-        cv2.imshow("Display Image",color_mat)
+        cv2.imshow("Display Image", color_mat)
+        cv2.waitKey(1)
         
 
 
