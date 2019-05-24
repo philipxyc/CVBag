@@ -12,7 +12,6 @@ if __name__ == '__main__':
     textSpeechTasks = multiprocessing.Queue()
     navTasks = multiprocessing.Queue()
     navResults = multiprocessing.Queue()
-
     workerSpeech2Txt = multiprocessing.Process(
     	name='speech to text'
     	, target=speech2text_node.start_node
@@ -34,6 +33,6 @@ if __name__ == '__main__':
         speechToTextTasks.put(None)
         textSpeechTasks.put(None)
         navTasks.put(None)
-        
+
         workerSpeech2Txt.join()
         workerTxt2Speech.join()
