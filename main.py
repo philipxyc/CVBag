@@ -2,6 +2,7 @@ import multiprocessing
 import realsense_node
 import speech2text_node
 import text2speech_node
+import locator_node
 import time
 
 if __name__ == '__main__':
@@ -10,16 +11,21 @@ if __name__ == '__main__':
     objDetectionTasks = multiprocessing.Queue()
     speechToTextTasks = multiprocessing.Queue()
     textToSpeechTasks = multiprocessing.Queue()
-    navTasks = multiprocessing.Queue()
+    locatorTasks = multiprocessing.Queue()
     workerSpeech2Txt = multiprocessing.Process(
     	name='speech to text'
     	, target=speech2text_node.start_node
-    	, args=(speechToTextTasks, objDetectionTasks, navTasks)
+    	, args=(speechToTextTasks, objDetectionTasks, locatorTasks)
     )
     workerTxt2Speech = multiprocessing.Process(
     	name='text to speech'
     	, target=text2speech_node.start_node
-    	, args=(textToSpeechTasks)
+    	, args=(textToSpeechTasks,)
+    )
+    workerLocator = multiprocessing.Process(
+    	name='locator'
+    	, target=locator_node.start_node
+    	, args=(locatorTasks, textToSpeechTasks)
     )
 
     try:
@@ -31,7 +37,7 @@ if __name__ == '__main__':
         objDetectionTasks.put(None)
         speechToTextTasks.put(None)
         textToSpeechTasks.put(None)
-        navTasks.put(None)
+        locatorTasks.put(None)
 
         workerSpeech2Txt.join()
         workerTxt2Speech.join()
