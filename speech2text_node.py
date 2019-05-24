@@ -62,7 +62,7 @@ def show_audio_devices_info():
 
     pa.terminate()
 
-def start_node(task_queue, objdetect_tasks, nav_tasks):
+def start_node(task_queue, objdetect_tasks, nav_tasks, text2speech_tasks):
     """
     Creates an input audio stream, initializes wake word detection (Porcupine) object, and monitors the audio
     stream for occurrences of the wake word(s). It prints the time of detection for each occurrence and index of
@@ -126,6 +126,7 @@ def start_node(task_queue, objdetect_tasks, nav_tasks):
                 # Replace with your own subscription key and service region (e.g., "westus").
 
                 print("Any instruction, sir?")
+                text2speech_tasks.put(('bing',))
 
                 # Starts speech recognition, and returns after a single utterance is recognized. The end of a
                 # single utterance is determined by listening for silence at the end or until a maximum of 15

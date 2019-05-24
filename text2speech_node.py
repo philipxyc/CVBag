@@ -3,6 +3,39 @@ import pyttsx3
 import multiprocessing, queue
 import azure.cognitiveservices.speech as speechsdk
 
+import pyaudio  
+import wave  
+
+
+def play_audio(path):
+    #define stream chunk   
+    chunk = 1024  
+
+    #open a wav format music  
+    f = wave.open(path,"rb")  
+    #instantiate PyAudio  
+    p = pyaudio.PyAudio()  
+    #open stream  
+    stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
+                    channels = f.getnchannels(),  
+                    rate = f.getframerate(),  
+                    output = True)  
+    #read data  
+    data = f.readframes(chunk)  
+
+    #play stream  
+    while data:  
+        stream.write(data)  
+        data = f.readframes(chunk)  
+
+    #stop stream  
+    stream.stop_stream()  
+    stream.close()  
+
+    #close PyAudio  
+    p.terminate()
+
+
 def start_node(task_queue, objdetect_results, nav_results):
     engine = pyttsx3.init()
 
@@ -46,6 +79,9 @@ def start_node(task_queue, objdetect_results, nav_results):
             if message:
                 engine.say(message)
                 engine.runAndWait()
+
+            if not message and task[0] == 'bing':
+                play_audio('res/bing.wav')
     finally:
         # Say goodbye
         engine.say("Goodbye")
