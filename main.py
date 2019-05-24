@@ -15,7 +15,7 @@ if __name__ == '__main__':
     workerSpeech2Txt = multiprocessing.Process(
     	name='speech to text'
     	, target=speech2text_node.start_node
-    	, args=(speechToTextTasks, objDetectionTasks, locatorTasks)
+    	, args=(speechToTextTasks, objDetectionTasks, locatorTasks, textToSpeechTasks)
     )
     workerTxt2Speech = multiprocessing.Process(
     	name='text to speech'
