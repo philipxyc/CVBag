@@ -1,8 +1,10 @@
 import numpy as np
 import cv2
 import pyrealsense2 as rs
-import multiprocessing
+import multiprocessing, queue
 import math, time
+from pyfirmata import Arduino
+
 
 ##################################################################
 # DNN Parameters
@@ -117,13 +119,35 @@ def edgeDetection(depth):
 ##################################################################
 # Main Loop Parameters
 ##################################################################
-depthmap_visualization = False
+depthmap_visualization = True
 colormap_visualization = False
 objdetect_visualization = False
 depthintensity_verbose = True
 objdetection_verbose = True
 
 def start_node(task_queue, result_queue):
+
+    ##################################################################
+    # Vibration Control Util
+    ##################################################################
+
+    try:
+        board = Arduino('COM5')
+    except:
+        board = Arduino('COM3')
+
+    pins = [board.get_pin('d:10:p'), board.get_pin('d:9:p'), board.get_pin('d:6:p'), board.get_pin('d:5:p'), board.get_pin('d:3:p')]
+
+    def set_vib(l:list):
+        val, idx = min((val, idx) for (idx, val) in enumerate(l))
+        pins[idx].write(max(1 - l[idx]/60, 0))
+        for i in range(len(l)):
+            if i != idx:
+                pins[i].write(0)
+
+    ##################################################################
+    # Vision Setup
+    ##################################################################
     
     net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel")
     
@@ -159,68 +183,75 @@ def start_node(task_queue, result_queue):
     depth_to_disparity = rs.disparity_transform(True)
     disparity_to_depth = rs.disparity_transform(False)
 
-    while(True):
-        frame = pipeline.wait_for_frames()
+    try:
+        while(True):
+            frame = pipeline.wait_for_frames()
 
-        frame = align_to.process(frame)
+            frame = align_to.process(frame)
 
-        color_frame = frame.get_color_frame()
-        depth_frame = frame.get_depth_frame()
+            color_frame = frame.get_color_frame()
+            depth_frame = frame.get_depth_frame()
 
-        depth_frame = decimation.process(depth_frame)
-        depth_frame = threshold.process(depth_frame)
-        depth_frame = depth_to_disparity.process(depth_frame)
-        depth_frame = spatial.process(depth_frame)
-        depth_frame = disparity_to_depth.process(depth_frame)
+            depth_frame = decimation.process(depth_frame)
+            depth_frame = threshold.process(depth_frame)
+            depth_frame = depth_to_disparity.process(depth_frame)
+            depth_frame = spatial.process(depth_frame)
+            depth_frame = disparity_to_depth.process(depth_frame)
 
-        color_mat = np.asanyarray(color_frame.get_data())
-        depth_mat = np.asanyarray(depth_frame.get_data())
+            color_mat = np.asanyarray(color_frame.get_data())
+            depth_mat = np.asanyarray(depth_frame.get_data())
 
-        if depthmap_visualization:
-            depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
-            cv2.imshow("Depth Map", depth_colormap)
-        if colormap_visualization:
-            cv2.imshow("Color Map", color_mat)
+            if depthmap_visualization:
+                depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
+                cv2.imshow("Depth Map", depth_colormap)
+            if colormap_visualization:
+                cv2.imshow("Color Map", color_mat)
 
-        intensity = obstacleEstimate(depth_mat)
-        if depthintensity_verbose:
-            print("Intensity:", intensity)
+            intensity = obstacleEstimate(depth_mat)
+            if depthintensity_verbose:
+                print("Intensity:", intensity)
 
-        try:
-            task = task_queue.get_nowait()
-            if task is None:
-                break
-            objectDetectEnabled = True
-        except multiprocessing.Queue.Empty:
-            objectDetectEnabled = False
+            set_vib(intensity)
 
-        if objectDetectEnabled:
-            if color_frame.get_frame_number() != last_frame_number:
-                last_frame_number = color_frame.get_frame_number()
+            try:
+                task = task_queue.get_nowait()
+                if task is None:
+                    break
+            except queue.Empty:
+                objectDetectEnabled = False
+                task = None
 
-                # Record start time
-                if objdetection_verbose:
-                    start_time = time.clock()
+            if objectDetectEnabled:
+                if color_frame.get_frame_number() != last_frame_number:
+                    last_frame_number = color_frame.get_frame_number()
 
-                objects = objectDetect(color_mat, depth_mat, crop)
-
-                # Send result to the message queue
-                result_queue.put(objects)
-
-                for obj in objects:
-                    className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
-                    conf = "%s(%f), %fm" % (className, confidence, m)
-
+                    # Record start time
                     if objdetection_verbose:
-                        print("Detected: %s, Distance: %f" % (className, m))
+                        start_time = time.clock()
+
+                    objects = objectDetect(color_mat, depth_mat, crop)
+
+                    # Send result to the message queue
+                    result_queue.put((task, objects))
+
+                    for obj in objects:
+                        className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
+                        conf = "%s(%f), %fm" % (className, confidence, m)
+
+                        if objdetection_verbose:
+                            print("Detected: %s, Distance: %f" % (className, m))
+
+                        if objdetect_visualization:
+                            cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
+                            cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                    if objdetection_verbose:
+                        print("Detection time: %fs" % (time.clock() - start_time))
 
                     if objdetect_visualization:
-                        cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
-                        cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
-                if objdetection_verbose:
-                    print("Detection time: %fs" % (time.clock() - start_time))
-
-                if objdetect_visualization:
-                    cv2.imshow("Object Detection", color_mat)
-            
-        cv2.waitKey(1)
+                        cv2.imshow("Object Detection", color_mat)
+                
+            cv2.waitKey(1)
+    finally:
+        # Stop streaming
+        pipeline.stop()
+        set_vib([60,60,60,60,60])
