@@ -1,7 +1,7 @@
 import multiprocessing, queue
 import azure.cognitiveservices.speech as speechsdk
 
-def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_results)
+def start_node(task_queue, objdetect_tasks, objdetect_results, nav_tasks, nav_results):
 	speech_key, service_region = "b1b54e5bcd8943f0b8106e000e1298d7", "eastasia"
 	speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
 

@@ -18,8 +18,11 @@ except:
 pins = [board.get_pin('d:10:p'), board.get_pin('d:9:p'), board.get_pin('d:6:p'), board.get_pin('d:5:p'), board.get_pin('d:3:p')]
 
 def set_vib(l:list):
-    val, idx = min((val, idx) for (idx, val) in enumerate(my_list))
+    val, idx = min((val, idx) for (idx, val) in enumerate(l))
     pins[idx].write(max(1 - l[idx]/60, 0))
+    for i in range(len(l)):
+        if i != idx:
+            pins[i].write(0)
 
 
 
