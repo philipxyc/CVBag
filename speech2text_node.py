@@ -42,6 +42,12 @@ keyword_file_paths = [porcupinePath + '/resources/keyword_files/windows/hey bag_
 sensitivities = [0.5]
 output_path = None
 input_audio_device_index = None
+CMD_KWS = [
+	('what', 'in', 'front')  # what is in front of me
+	('where', 'is')  # where is my bottle
+	('where', 'am', 'i')  # where am i
+]
+
 
 def show_audio_devices_info():
     """ Provides information regarding different audio devices available. """
@@ -132,6 +138,22 @@ def start_node(task_queue, objdetect_tasks, nav_tasks):
                 # Checks result.
                 if result.reason == speechsdk.ResultReason.RecognizedSpeech:
                     print("Recognized: {}".format(result.text))
+
+					tokens = result.text.split()
+					for i, kws in enumerate(CMD_KWS):
+						matched = 0
+						for token in tokens:
+							if token in kws:
+								matched += 1
+
+						if matched == len(kws):
+							if i == 0:
+								objdetect_tasks.put(('overview',))
+							else if i == 1:
+								objdetect_tasks.put(('find', tokens[-1]))
+							else if i == 2:
+								nav_tasks.put('location',)
+
                 elif result.reason == speechsdk.ResultReason.NoMatch:
                     print("No speech could be recognized: {}".format(result.no_match_details))
                 elif result.reason == speechsdk.ResultReason.Canceled:

@@ -6,8 +6,8 @@ import time
 
 if __name__ == '__main__':
     # Establish communication queues
-    objDetectionTasks = multiprocessing.Queue()
-    objDetectionResults = multiprocessing.Queue()
+    objDetectionTasks = multiprocessing.Queue() # ('overview', ) or ('find', '{item name}')
+    objDetectionResults = multiprocessing.Queue() # ('location', )
     speechToTextTasks = multiprocessing.Queue()
     textSpeechTasks = multiprocessing.Queue()
     navTasks = multiprocessing.Queue()
