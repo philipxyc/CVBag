@@ -7,26 +7,6 @@ from pyfirmata import Arduino
 
 
 ##################################################################
-# Vibration Control Util
-##################################################################
-
-try:
-    board = Arduino('COM5')
-except:
-    board = Arduino('COM3')
-
-pins = [board.get_pin('d:10:p'), board.get_pin('d:9:p'), board.get_pin('d:6:p'), board.get_pin('d:5:p'), board.get_pin('d:3:p')]
-
-def set_vib(l:list):
-    val, idx = min((val, idx) for (idx, val) in enumerate(l))
-    pins[idx].write(max(1 - l[idx]/60, 0))
-    for i in range(len(l)):
-        if i != idx:
-            pins[i].write(0)
-
-
-
-##################################################################
 # DNN Parameters
 ##################################################################
 inWidth      = 300
@@ -146,6 +126,28 @@ depthintensity_verbose = True
 objdetection_verbose = True
 
 def start_node(task_queue, result_queue):
+
+    ##################################################################
+    # Vibration Control Util
+    ##################################################################
+
+    try:
+        board = Arduino('COM5')
+    except:
+        board = Arduino('COM3')
+
+    pins = [board.get_pin('d:10:p'), board.get_pin('d:9:p'), board.get_pin('d:6:p'), board.get_pin('d:5:p'), board.get_pin('d:3:p')]
+
+    def set_vib(l:list):
+        val, idx = min((val, idx) for (idx, val) in enumerate(l))
+        pins[idx].write(max(1 - l[idx]/60, 0))
+        for i in range(len(l)):
+            if i != idx:
+                pins[i].write(0)
+
+    ##################################################################
+    # Vision Setup
+    ##################################################################
     
     net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel")
     
@@ -252,3 +254,4 @@ def start_node(task_queue, result_queue):
     finally:
         # Stop streaming
         pipeline.stop()
+        set_vib([60,60,60,60,60])
