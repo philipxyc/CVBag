@@ -29,4 +29,4 @@ def play_audio(path):
     #close PyAudio  
     p.terminate() 
 
-play_audio('res/bing.wav')
+play_audio('res/moss.wav')
