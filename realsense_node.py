@@ -121,7 +121,7 @@ def edgeDetection(depth):
 ##################################################################
 depthmap_visualization = True
 colormap_visualization = False
-objdetect_visualization = False
+objdetect_visualization = True
 depthintensity_verbose = False
 objdetection_verbose = True
 
@@ -217,39 +217,38 @@ def start_node(task_queue, result_queue):
                 task = task_queue.get_nowait()
                 if task is None:
                     break
-            except queue.Empty:
-                objectDetectEnabled = False
-                task = None
+                else:
+                    if color_frame.get_frame_number() != last_frame_number:
+                        last_frame_number = color_frame.get_frame_number()
 
-            if objectDetectEnabled:
-                if color_frame.get_frame_number() != last_frame_number:
-                    last_frame_number = color_frame.get_frame_number()
-
-                    # Record start time
-                    if objdetection_verbose:
-                        start_time = time.clock()
-
-                    objects = objectDetect(color_mat, depth_mat, crop)
-
-                    # Send result to the message queue
-                    result_queue.put((task, objects))
-
-                    for obj in objects:
-                        className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
-                        conf = "%s(%f), %fm" % (className, confidence, m)
-
+                        # Record start time
                         if objdetection_verbose:
-                            print("Detected: %s, Distance: %f" % (className, m))
+                            start_time = time.clock()
+
+                        objects = objectDetect(color_mat, depth_mat, crop)
+
+                        # Send result to the message queue
+                        res = list(task).append(objects)
+                        result_queue.put(tuple(res))
+
+                        for obj in objects:
+                            className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
+                            conf = "%s(%f), %fm" % (className, confidence, m)
+
+                            if objdetection_verbose:
+                                print("Detected: %s, Distance: %f" % (className, m))
+
+                            if objdetect_visualization:
+                                cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
+                                cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                        if objdetection_verbose:
+                            print("Detection time: %fs" % (time.clock() - start_time))
 
                         if objdetect_visualization:
-                            cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
-                            cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
-                    if objdetection_verbose:
-                        print("Detection time: %fs" % (time.clock() - start_time))
+                            cv2.imshow("Object Detection", color_mat)
+            except queue.Empty:
+                pass
 
-                    if objdetect_visualization:
-                        cv2.imshow("Object Detection", color_mat)
-                
             cv2.waitKey(1)
     finally:
         # Stop streaming
