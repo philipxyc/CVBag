@@ -41,7 +41,7 @@ def depthIntensity(depth):
     depth = 1.0 / depth
     numBlock = 5
     step = math.ceil(depth.shape[1] / numBlock)
-    intensity = [] 
+    intensity = []
     for i in range(numBlock):
         if i <= numBlock - 2:
             intensity.append(np.sum(depth[...,i*step:(i+1)*step]))
