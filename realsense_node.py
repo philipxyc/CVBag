@@ -19,7 +19,9 @@ classNames  = ["background",
                 "bottle", "bus", "car", "cat", "chair",
                 "cow", "diningtable", "dog", "horse",
                 "motorbike", "person", "pottedplant",
-                "sheep", "sofa", "train", "tvmonitor"]
+                "sheep", "sofa", "train", "monitor"]
+
+net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel")
 
 def objectDetect(color_mat, depth_mat, crop):
 
@@ -42,7 +44,7 @@ def objectDetect(color_mat, depth_mat, crop):
     confidenceThreshold = 0.8
 
     results = []
-    for i in range(0, detection.size // 7):
+    for i in range(0, detectionMat.shape[0]):
         confidence = detectionMat[i][2]
         if confidence > confidenceThreshold:
             objectClass = detectionMat[i][1]
@@ -62,7 +64,7 @@ def objectDetect(color_mat, depth_mat, crop):
             # bounding box
             rect = (xLeftBottom, yLeftBottom, xRightTop, yRightTop)
             # calculate average distance
-            m = cv2.mean(depth_mat[yRightTop:yLeftBottom][xLeftBottom:xRightTop])
+            m = cv2.mean(depth_mat[yLeftBottom:yRightTop][xLeftBottom:xRightTop])
 
             results.append({"classid": int(objectClass)
                 , "classname": className
@@ -121,7 +123,7 @@ def edgeDetection(depth):
 ##################################################################
 depthmap_visualization = True
 colormap_visualization = False
-objdetect_visualization = False
+objdetect_visualization = True
 depthintensity_verbose = False
 objdetection_verbose = True
 
@@ -148,8 +150,6 @@ def start_node(task_queue, result_queue):
     ##################################################################
     # Vision Setup
     ##################################################################
-    
-    net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel")
     
     pipeline = rs.pipeline()
     config = rs.config()
@@ -213,15 +213,22 @@ def start_node(task_queue, result_queue):
 
             set_vib(intensity)
 
+            task = None
+            objDetectEnabled = False
             try:
                 task = task_queue.get_nowait()
                 if task is None:
                     break
+                else:
+                    objDetectEnabled = True
             except queue.Empty:
-                objectDetectEnabled = False
-                task = None
+                pass
 
-            if objectDetectEnabled:
+            # Detection by keyboard for testing
+            key = cv2.waitKey(1)
+            if key == 32: objDetectEnabled = True
+
+            if objDetectEnabled:
                 if color_frame.get_frame_number() != last_frame_number:
                     last_frame_number = color_frame.get_frame_number()
 
@@ -232,25 +239,29 @@ def start_node(task_queue, result_queue):
                     objects = objectDetect(color_mat, depth_mat, crop)
 
                     # Send result to the message queue
-                    result_queue.put((task, objects))
+                    if task is not None:
+                        res = list(task)
+                        res.append(objects)
+                        result_queue.put(tuple(res))
 
                     for obj in objects:
                         className, confidence, rect, m = obj["classname"], obj["confidence"], obj["rect"], obj["distance"]
-                        conf = "%s(%f), %fm" % (className, confidence, m)
+                        conf = "%s(%f), %fm" % (className, confidence, m/1000)
 
                         if objdetection_verbose:
-                            print("Detected: %s, Distance: %f" % (className, m))
+                            print("Detected: %s" % conf)
 
                         if objdetect_visualization:
                             cv2.rectangle(color_mat, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0))
-                            cv2.putText(color_mat, className, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
+                            cv2.putText(color_mat, conf, (rect[0], rect[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0))
                     if objdetection_verbose:
                         print("Detection time: %fs" % (time.clock() - start_time))
 
                     if objdetect_visualization:
                         cv2.imshow("Object Detection", color_mat)
                 
-            cv2.waitKey(1)
+    except KeyboardInterrupt:
+        print("Shutdown realsense worker ...")
     finally:
         # Stop streaming
         pipeline.stop()
