@@ -140,7 +140,10 @@ def start_node(task_queue, objdetect_tasks, nav_tasks, text2speech_tasks):
                 if result.reason == speechsdk.ResultReason.RecognizedSpeech:
                     print("Recognized: {}".format(result.text))
 
-                    tokens = result.text.lower().split()
+                    text = result.text.lower()
+                    punc = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+                    for c in punc: text = text.replace(c, ' ')  # Remove all punctuation
+                    tokens = text.split()
                     for i, kws in enumerate(CMD_KWS):
                         matched = 0
                         for token in tokens:
