@@ -3,20 +3,21 @@ import json, sys
 
 import multiprocessing, queue
 
-prog = 'findclient'
+prog = 'findclient.exe'
 group = 'geekpietest'
 
 def run_findclient():
     process = Popen(
-        args=('echo y | %s -g %s -c 10' % (prog, group)),
+        args=('echo y | %s -g %s -c 3' % (prog, group)),
         stdout=PIPE,
+        stderr=PIPE,
         shell=True
     )
-    return process.communicate()[0]
+    _, err = process.communicate(input='y\n')
+    return err.decode('utf-8')
 
 def track_position():
     output = run_findclient()
-    # output = sys.stdin.read()
 
     lines = output.split('\n')
 
@@ -35,6 +36,7 @@ def track_position():
 
             statistics[k] += rf_d[k]
 
+    print(statistics)
     return max(statistics)
 
 def start_node(task_queue, results_queue):

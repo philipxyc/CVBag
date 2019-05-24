@@ -3,36 +3,7 @@ import pyttsx3
 import multiprocessing, queue
 import azure.cognitiveservices.speech as speechsdk
 
-import pyaudio  
-import wave  
-
-def play_audio(path):
-    #define stream chunk   
-    chunk = 1024  
-
-    #open a wav format music  
-    f = wave.open(path,"rb")  
-    #instantiate PyAudio  
-    p = pyaudio.PyAudio()  
-    #open stream  
-    stream = p.open(format = p.get_format_from_width(f.getsampwidth()),  
-                    channels = f.getnchannels(),  
-                    rate = f.getframerate(),  
-                    output = True)  
-    #read data  
-    data = f.readframes(chunk)  
-
-    #play stream  
-    while data:  
-        stream.write(data)  
-        data = f.readframes(chunk)  
-
-    #stop stream  
-    stream.stop_stream()  
-    stream.close()  
-
-    #close PyAudio  
-    p.terminate()
+import play_audio  
 
 
 def start_node(task_queue):
@@ -69,7 +40,7 @@ def start_node(task_queue):
                     name = task[1]
                     message = "Sir, you're currently located at %s" % name
                 elif task[0] == 'bing':
-                    play_audio('res/bing.wav')
+                    play_audio.play('res/bing.wav')
                 else:
                     message = "Sir, it seems something wrong with me!"
             if message is not None:

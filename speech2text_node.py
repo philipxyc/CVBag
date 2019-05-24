@@ -12,6 +12,8 @@ from threading import Thread
 import numpy as np
 import pyaudio
 import soundfile
+import play_audio
+
 
 porcupinePath = "./Porcupine"
 sys.path.append(os.path.join(os.path.dirname(__file__), porcupinePath + '/binding/python'))
@@ -103,6 +105,8 @@ def start_node(task_queue, objdetect_tasks, nav_tasks, text2speech_tasks):
         # Creates a recognizer with the given settings
         speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
         
+        play_audio.play('res/moss.wav')
+
         while True:
             
             try:
@@ -156,7 +160,7 @@ def start_node(task_queue, objdetect_tasks, nav_tasks, text2speech_tasks):
                             elif i == 1:
                                 objdetect_tasks.put(('find', tokens[-1]))
                             elif i == 2:
-                                nav_tasks.put('location',)
+                                nav_tasks.put(('location',))
 
                 elif result.reason == speechsdk.ResultReason.NoMatch:
                     print("No speech could be recognized: {}".format(result.no_match_details))

@@ -31,6 +31,7 @@ if __name__ == '__main__':
     try:
         workerSpeech2Txt.start()
         workerTxt2Speech.start()
+        workerLocator.start()
 
         realsense_node.start_node(objDetectionTasks, textToSpeechTasks)
     finally:
