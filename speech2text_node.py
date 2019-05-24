@@ -18,13 +18,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), porcupinePath + '/bindin
 
 from porcupine import Porcupine
 
-library_path = _default_library_path()
-model_file_path = porcupinePath + '/lib/common/porcupine_params.pv'
-keyword_file_paths = [porcupinePath + '/resources/keyword_files/windows/hey bag_windows.ppn']
-sensitivities = [0.5]
-output_path = None
-input_audio_device_index = None
-
 def _default_library_path():
     system = platform.system()
     machine = platform.machine()
@@ -42,6 +35,13 @@ def _default_library_path():
         else:
             return os.path.join(os.path.dirname(__file__), porcupinePath + '\\lib\\windows\\amd64\\libpv_porcupine.dll')
     raise NotImplementedError('Porcupine is not supported on %s/%s yet!' % (system, machine))
+
+library_path = _default_library_path()
+model_file_path = porcupinePath + '/lib/common/porcupine_params.pv'
+keyword_file_paths = [porcupinePath + '/resources/keyword_files/windows/hey bag_windows.ppn']
+sensitivities = [0.5]
+output_path = None
+input_audio_device_index = None
 
 def show_audio_devices_info():
     """ Provides information regarding different audio devices available. """
