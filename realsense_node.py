@@ -122,7 +122,7 @@ def edgeDetection(depth):
 depthmap_visualization = True
 colormap_visualization = False
 objdetect_visualization = False
-depthintensity_verbose = True
+depthintensity_verbose = False
 objdetection_verbose = True
 
 def start_node(task_queue, result_queue):
