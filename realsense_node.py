@@ -3,7 +3,7 @@ import cv2
 import pyrealsense2 as rs
 import multiprocessing, queue
 import math, time
-from pyfirmata import Arduino
+from serial import Serial
 
 
 ##################################################################
@@ -127,7 +127,7 @@ def edgeDetection(depth):
 depthmap_visualization = False
 colormap_visualization = False
 objdetect_visualization = False
-depthintensity_verbose = False
+depthintensity_verbose = True
 objdetection_verbose = True
 
 def start_node(task_queue, result_queue):
@@ -136,21 +136,19 @@ def start_node(task_queue, result_queue):
     # Vibration Control Util
     ##################################################################
 
-    '''
+    
     try:
-        board = Arduino('COM5')
+        board = Serial('/dev/ttyUSB0')
     except:
-        board = Arduino('COM3')
-
-    pins = [board.get_pin('d:10:p'), board.get_pin('d:9:p'), board.get_pin('d:6:p'), board.get_pin('d:5:p'), board.get_pin('d:3:p')]
+        board = Serial('/dev/ttyUSB1')
 
     def set_vib(l:list):
+        pins = [0,0,0,0,0]
         val, idx = min((val, idx) for (idx, val) in enumerate(l))
-        pins[idx].write(max(1 - l[idx]/60, 0))
-        for i in range(len(l)):
-            if i != idx:
-                pins[i].write(0)
-    '''
+        pins[idx] = int(max(1 - l[idx]/60, 0) * 255)
+        print(val, idx, pins)
+        board.write(str(pins).encode())
+    
 
     ##################################################################
     # Vision Setup
@@ -216,7 +214,7 @@ def start_node(task_queue, result_queue):
             if depthintensity_verbose:
                 print("Intensity:", intensity)
 
-            #set_vib(intensity)
+            set_vib(intensity)
 
             task = None
             objDetectEnabled = False
@@ -270,4 +268,4 @@ def start_node(task_queue, result_queue):
     finally:
         # Stop streaming
         pipeline.stop()
-        #set_vib([60,60,60,60,60])
+        set_vib([60,61,61,61,61])
