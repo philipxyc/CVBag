@@ -1,43 +1,45 @@
+#include "SoftPWM.h"
+
 // pins for the MOTORs:
 const int m0 = 60;
 const int m1 = 61;
 const int m2 = 62;
 const int m3 = 63;
 const int m4 = 64;
-const int m5 = 65;
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial2.begin(9600);
+  SoftPWMBegin();
+  pinMode(m0, OUTPUT);  
   pinMode(m1, OUTPUT);
   pinMode(m2, OUTPUT);
   pinMode(m3, OUTPUT);
   pinMode(m4, OUTPUT);
-  pinMode(m5, OUTPUT);  
 }
 
 void loop() {
   // if there's any serial available, read it:
-  while (Serial.available() > 0) {
+  while (Serial2.available() > 0) {
 
-    int m1v = Serial.parseInt();
-    int m2v = Serial.parseInt();
-    int m3v = Serial.parseInt();
-    int m4v = Serial.parseInt();
-    int m5v = Serial.parseInt();
+    int m0v = Serial2.parseInt();
+    int m1v = Serial2.parseInt();
+    int m2v = Serial2.parseInt();
+    int m3v = Serial2.parseInt();
+    int m4v = Serial2.parseInt();
 
     // look for the newline. That's the end of your sentence:
-    if (Serial.read() == '\n') {
-      analogWrite(m1, m1v);
-      analogWrite(m2, m2v);
-      analogWrite(m3, m3v);
-      analogWrite(m4, m4v);
-      analogWrite(m5, m5v);
-      Serial.print(m1v, HEX);
-      Serial.print(m2v, HEX);
-      Serial.print(m3v, HEX);
-      Serial.print(m4v, HEX);
-      Serial.println(m5v, HEX);
+    if (Serial2.read() == ']') {
+      SoftPWMSet(m0, m0v);
+      SoftPWMSet(m1, m1v);
+      SoftPWMSet(m2, m2v);
+      SoftPWMSet(m3, m3v);
+      SoftPWMSet(m4, m4v);
+      Serial2.print(m0v);
+      Serial2.print(m1v);
+      Serial2.print(m2v);
+      Serial2.print(m3v);
+      Serial2.println(m4v);
     }
   }
 }
