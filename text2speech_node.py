@@ -1,9 +1,10 @@
 import pyttsx3
 
 import multiprocessing, queue
-import azure.cognitiveservices.speech as speechsdk
+# import azure.cognitiveservices.speech as speechsdk
 
-import play_audio  
+# import play_audio
+import snowboydecoder
 
 
 def start_node(task_queue):
@@ -40,12 +41,16 @@ def start_node(task_queue):
                     name = task[1]
                     message = "Sir, you're currently located at %s" % name
                 elif task[0] == 'bing':
-                    play_audio.play('res/bing.wav')
+                    # play_audio.play('res/bing.wav')
+                    snowboydecoder.play_audio_file('res/bing.wav')
+                elif task[0] == 'welcome':
+                    message = "Welcome Sir"
                 else:
                     message = "Sir, it seems something wrong with me!"
             if message is not None:
                 engine.say(message)
                 engine.runAndWait()
+
     except KeyboardInterrupt:
         print("Shutdown speech worker ...")
     finally:

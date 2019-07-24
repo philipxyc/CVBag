@@ -59,6 +59,9 @@ def objectDetect(color_mat, depth_mat, crop):
             if yLeftBottom > depth_mat.shape[0]: yLeftBottom = depth_mat.shape[0]
             if xRightTop > depth_mat.shape[1]: xRightTop = depth_mat.shape[1]
             if yRightTop < 0: yRightTop = 0
+            
+            classIdx = int(objectClass)
+            print("Recog Index:", classIdx)
 
             className = classNames[int(objectClass)]
             # bounding box
@@ -133,6 +136,7 @@ def start_node(task_queue, result_queue):
     # Vibration Control Util
     ##################################################################
 
+    '''
     try:
         board = Arduino('COM5')
     except:
@@ -146,6 +150,7 @@ def start_node(task_queue, result_queue):
         for i in range(len(l)):
             if i != idx:
                 pins[i].write(0)
+    '''
 
     ##################################################################
     # Vision Setup
@@ -211,7 +216,7 @@ def start_node(task_queue, result_queue):
             if depthintensity_verbose:
                 print("Intensity:", intensity)
 
-            set_vib(intensity)
+            #set_vib(intensity)
 
             task = None
             objDetectEnabled = False
@@ -265,4 +270,4 @@ def start_node(task_queue, result_queue):
     finally:
         # Stop streaming
         pipeline.stop()
-        set_vib([60,60,60,60,60])
+        #set_vib([60,60,60,60,60])
