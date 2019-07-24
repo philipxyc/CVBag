@@ -26,7 +26,7 @@ net = cv2.dnn.readNetFromCaffe("MobileNetSSD_deploy.prototxt", "MobileNetSSD_dep
 def objectDetect(color_mat, depth_mat, crop):
 
     input_blob = cv2.dnn.blobFromImage(color_mat, inScaleFactor, (inWidth, inHeight), meanVal, False)
-    
+
     net.setInput(input_blob, "data")
 
     # detection = net.forward("fc")
@@ -59,7 +59,7 @@ def objectDetect(color_mat, depth_mat, crop):
             if yLeftBottom > depth_mat.shape[0]: yLeftBottom = depth_mat.shape[0]
             if xRightTop > depth_mat.shape[1]: xRightTop = depth_mat.shape[1]
             if yRightTop < 0: yRightTop = 0
-            
+
             classIdx = int(objectClass)
             print("Recog Index:", classIdx)
 
@@ -124,9 +124,9 @@ def edgeDetection(depth):
 ##################################################################
 # Main Loop Parameters
 ##################################################################
-depthmap_visualization = True
+depthmap_visualization = False
 colormap_visualization = False
-objdetect_visualization = True
+objdetect_visualization = False
 depthintensity_verbose = False
 objdetection_verbose = True
 

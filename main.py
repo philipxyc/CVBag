@@ -3,6 +3,7 @@ import realsense_node
 import speech2text_node
 import text2speech_node
 import locator_node
+import locator_node_cp
 import time
 
 if __name__ == '__main__':
@@ -24,14 +25,14 @@ if __name__ == '__main__':
     )
     workerLocator = multiprocessing.Process(
     	name='locator'
-    	, target=locator_node.start_node
+    	, target=locator_node_cp.start_node
     	, args=(locatorTasks, textToSpeechTasks)
     )
 
     try:
         workerSpeech2Txt.start()
         workerTxt2Speech.start()
-        # workerLocator.start()
+        workerLocator.start()
 
         realsense_node.start_node(objDetectionTasks, textToSpeechTasks)
     finally:

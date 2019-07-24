@@ -42,7 +42,7 @@ def start_node(task_queue):
                     message = "Sir, you're currently located at %s" % name
                 elif task[0] == 'bing':
                     # play_audio.play('res/bing.wav')
-                    snowboydecoder.play_audio_file('resources/bing.wav')
+                    snowboydecoder.play_audio_file('resources/ding.wav')
                 elif task[0] == 'welcome':
                     message = "Welcome Sir"
                 else:

@@ -56,7 +56,7 @@ def hotword_detected_callback():
         print("Say something!")
         r.adjust_for_ambient_noise(source, duration=1)
         print("Adjusted ...")
-        audio = r.listen(source, phrase_time_limit=7)
+        audio = r.listen(source, phrase_time_limit=3)
     print("Recognizing Speech ...")
 
     # recognize speech using Sphinx
